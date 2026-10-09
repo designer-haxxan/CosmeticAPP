@@ -8,6 +8,7 @@ import * as Auth from '../services/auth.js';
 import * as Catalog from '../services/catalog.js';
 import * as Posting from '../services/posting.js';
 import * as Backup from '../services/backup.js';
+import { locale } from '../i18n/i18n.js';
 
 const $ = window.jQuery;
 
@@ -76,7 +77,7 @@ function drawWeekChart(box, days) {
   for (const t of ticks) svg += `<text x="${m.l - 8}" y="${y(t) + 4}" text-anchor="end">${compact(t)}</text>`;
   days.forEach((d, i) => {
     const cx = m.l + band * i + band / 2;
-    const label = i === days.length - 1 ? 'Today' : new Date(d.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+    const label = i === days.length - 1 ? 'Today' : new Date(d.date + 'T00:00:00').toLocaleDateString(locale(), { weekday: 'short' });
     svg += `<text x="${cx}" y="${H - 6}" text-anchor="middle" ${i === days.length - 1 ? 'font-weight="700"' : ''}>${esc(label)}</text>`;
   });
   svg += '</g>';
@@ -119,6 +120,7 @@ export default {
     const tracked = prods.filter((p) => p.trackStock !== false);
     const stockValue = tracked.reduce((s, p) => s + Math.max(0, p.stock) * (p.purchasePrice || 0), 0);
     const low = tracked.filter((p) => p.stock <= (p.minStock || 0)).sort((a, b) => a.stock - b.stock);
+    const expiring = prods.map((p) => ({ p, e: Catalog.expiryInfo(p) })).filter((x) => x.e && x.e.state !== 'ok').sort((a, b) => a.e.days - b.e.days);
     const customers = Catalog.allParties('customers').filter((c) => c.active).length;
     const suppliers = Catalog.allParties('suppliers').filter((c) => c.active).length;
     const lastBackup = pref.get('lastBackupAt');
@@ -136,7 +138,7 @@ export default {
     $el.html(`
       <div class="hero-card">
         <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
-          <div><div class="hello">${greet}, ${esc(u.name.split(' ')[0])}</div><div class="date">${new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div></div>
+          <div><div class="hello">${greet}, ${esc(u.name.split(' ')[0])}</div><div class="date">${new Date().toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div></div>
           <span class="pill"><i class="bi bi-${navigator.onLine ? 'cloud-check' : 'wifi-off'}"></i>${navigator.onLine ? 'Online' : 'Offline'}</span>
         </div>
         <div class="lbl">Today's sales</div>
@@ -158,16 +160,17 @@ export default {
 
       <div class="section-title"><h2>Business hub</h2></div>
       <div class="row g-2 stagger">
-        ${tile('#/sales', 'receipt', 'indigo', 'Sales', `${f.salesCount} today · ${esc(cur())} ${fmtNum(f.sales)}`)}
+        ${tile('#/sales', 'receipt', 'rose', 'Sales', `${f.salesCount} today · ${esc(cur())} ${fmtNum(f.sales)}`)}
         ${tile('#/purchases', 'bag-check', 'violet', 'Purchases', `${f.purchasesCount} today · ${esc(cur())} ${fmtNum(f.purchases)}`, 'purchase.manage')}
         ${tile('#/products', 'box-seam', 'cyan', 'Products', `${prods.length} active items`)}
         ${tile('#/stock', 'boxes', low.length ? 'red' : 'green', 'Inventory', low.length ? `${low.length} low / out of stock` : 'All stock levels fine')}
+        ${tile('#/products/expiring', 'calendar2-x', expiring.length ? 'amber' : 'green', 'Expiry alerts', expiring.length ? `${expiring.length} expiring or expired` : 'Nothing expiring soon')}
         ${tile('#/customers', 'people', 'pink', 'Customers', `${customers} · due ${esc(cur())} ${fmtNum(rec)}`)}
         ${tile('#/suppliers', 'truck', 'slate', 'Suppliers', `${suppliers} · payable ${esc(cur())} ${fmtNum(pay)}`, 'purchase.manage')}
         ${tile('#/accounts', 'bank', 'green', 'Accounts', `Cash & bank ${esc(cur())} ${fmtNum(cash)}`, 'account.manage')}
         ${tile('#/vouchers', 'cash-coin', 'amber', 'Cash book', 'Receipts & payments', 'voucher.create')}
         ${tile('#/returns', 'arrow-return-left', 'red', 'Returns', f.saleReturns ? `${esc(cur())} ${fmtNum(f.saleReturns)} today` : 'Sale & purchase returns')}
-        ${tile('#/reports', 'bar-chart-line', 'indigo', 'Reports', 'Sales, stock, profit & ledgers', 'reports.view')}
+        ${tile('#/reports', 'bar-chart-line', 'rose', 'Reports', 'Sales, stock, profit & ledgers', 'reports.view')}
         ${tile('#/backup', 'cloud-arrow-down', 'cyan', 'Backup', backupDays === null ? 'Not backed up yet' : `Last ${backupDays}d ago`, 'backup.export')}
         ${tile('#/settings', 'gear', 'slate', 'Settings', 'Shop, printer, tax')}
       </div>
@@ -176,7 +179,7 @@ export default {
       <div class="row g-2 stagger">
         ${kpi('person-down', 'amber', 'Receivables', M(rec), Auth.can('reports.view') ? '#/reports/receivables' : '#/customers')}
         ${Auth.can('purchase.manage') ? kpi('truck', 'red', 'Payables', M(pay), Auth.can('reports.view') ? '#/reports/payables' : null) : ''}
-        ${kpi('boxes', 'indigo', 'Stock value', M(stockValue), '#/stock')}
+        ${kpi('boxes', 'rose', 'Stock value', M(stockValue), '#/stock')}
         ${kpi('activity', 'cyan', 'Transactions today', `data-count="${f.txCount}"`, null)}
       </div>
 
@@ -197,10 +200,12 @@ export default {
       </div>
 
       <div class="row g-3 mt-1">
-        <div class="col-md-6"><div class="section-title mt-0"><h2>Recent sales</h2><a href="#/sales">View all</a></div>
+        <div class="col-lg-4"><div class="section-title mt-0"><h2>Recent sales</h2><a href="#/sales">View all</a></div>
           <div class="list-card">${f.recent.map((s) => `<a class="list-row" href="#/sales/${encodeURIComponent(s.id)}">${UI.avatar(s.customerName, 'round')}<div class="main"><div class="title">${esc(s.customerName)}</div><div class="sub">${esc(s.number)} · ${fmtTime(s.createdAt)}</div></div><div class="end"><div class="fw-bold money">${fmtNum(s.total)}</div>${s.balance > 0.004 ? '<span class="badge text-bg-warning">Credit</span>' : '<span class="badge bg-success-subtle text-success-emphasis">Paid</span>'}</div></a>`).join('') || UI.emptyState('No sales yet today', 'receipt')}</div></div>
-        <div class="col-md-6"><div class="section-title mt-0"><h2>Low stock</h2><a href="#/stock">Inventory</a></div>
+        <div class="col-lg-4"><div class="section-title mt-0"><h2>Low stock</h2><a href="#/stock">Inventory</a></div>
           <div class="list-card">${low.slice(0, 6).map((p) => `<a class="list-row" href="#/stock/${encodeURIComponent(p.id)}">${UI.avatar(p.name)}<div class="main"><div class="title">${esc(p.name)}</div><div class="sub">Minimum ${fmtQty(p.minStock || 0)} ${esc(p.unit || '')}</div></div><div class="end"><span class="badge ${p.stock <= 0 ? 'text-bg-danger' : 'text-bg-warning'}"><i class="bi bi-${p.stock <= 0 ? 'x-octagon' : 'exclamation-triangle'} me-1"></i>${fmtQty(p.stock)} ${esc(p.unit || '')}</span></div></a>`).join('') || UI.emptyState('All stock levels are fine', 'check2-circle')}</div></div>
+        <div class="col-lg-4"><div class="section-title mt-0"><h2>Products expiring soon</h2><a href="#/products/expiring">View all</a></div>
+          <div class="list-card">${expiring.slice(0, 6).map((x) => `<a class="list-row" href="#/products/expiring">${UI.avatar(x.p.name)}<div class="main"><div class="title">${esc(x.p.name)}</div><div class="sub">${esc([x.p.brand, x.p.shade, x.p.batchNo ? 'Batch ' + x.p.batchNo : ''].filter(Boolean).join(' · ') || fmtDate(x.p.expiryDate))}</div></div><div class="end"><span class="badge ${x.e.state === 'expired' ? 'text-bg-danger' : 'text-bg-warning'}">${x.e.state === 'expired' ? 'Expired' : `${x.e.days} days left`}</span></div></a>`).join('') || UI.emptyState('Nothing is expiring soon', 'calendar-check')}</div></div>
       </div>`);
 
     UI.countUp(el, (v, node) => (node.dataset.money ? `${cur()} ${fmtNum(v)}` : String(Math.round(v))));

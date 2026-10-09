@@ -1,7 +1,7 @@
 // Fast POS screen used for both sales (#/pos) and purchases (#/purchase/new). Edit: #/pos/edit/:id, #/purchase/edit/:id
 import * as idb from '../db/idb.js';
 import * as UI from '../core/ui.js';
-import { esc, fmtNum, fmtQty, uuid, round2, round3, num, debounce, today, AppError } from '../core/utils.js';
+import { esc, fmtNum, fmtQty, fmtDate, uuid, round2, round3, num, debounce, today, AppError } from '../core/utils.js';
 import { getSettings, pref } from '../core/settings.js';
 import { storageKey } from '../config.js';
 import * as Auth from '../services/auth.js';
@@ -10,6 +10,7 @@ import * as Posting from '../services/posting.js';
 import * as Printer from '../printer/printer.js';
 import * as Scanner from '../scanner/scanner.js';
 import { partyPicker } from './parties.js';
+import { locale } from '../i18n/i18n.js';
 
 const $ = window.jQuery;
 let st; let $root; let detachWedge = null; let payAccounts = [];
@@ -131,7 +132,8 @@ function renderGrid() {
     <button class="product-tile" data-id="${esc(p.id)}">
       ${p.image ? `<img src="${p.image}" alt="" loading="lazy">` : `<div class="ph tint-${UI.tintFor(p.name)}">${esc(UI.initials(p.name))}</div>`}
       <div class="n">${esc(p.name)}</div>
-      <div class="p">${fmtNum(priceOf(p))}</div>
+      ${p.brand || p.shade ? `<div class="b">${esc([p.brand, p.shade].filter(Boolean).join(' · '))}</div>` : ''}
+      <div class="p">${fmtNum(priceOf(p))}</div>${Catalog.expiryInfo(p)?.state === 'expired' ? '<div class="exp">Expired</div>' : ''}
       ${p.trackStock !== false ? `<div class="s">Stock: ${fmtQty(p.stock)}</div>` : ''}
     </button>`).join('') : UI.emptyState('No products', 'box'));
 }
@@ -153,6 +155,8 @@ function addProduct(p, qty = 1) {
     st.lines.unshift({ productId: p.id, name: p.name, unit: p.unit, qty, rate: priceOf(p), discount: 0 });
   }
   renderLines();
+  const expiry = Catalog.expiryInfo(p);
+  if (isSale() && expiry?.state === 'expired') UI.toast(`${p.name} expired on ${fmtDate(p.expiryDate)}. Do not sell it.`, 'warning', 4500);
   $root.find('.cart-line').first().addClass('bg-success-subtle');
   setTimeout(() => $root.find('.cart-line').first().removeClass('bg-success-subtle'), 400);
   const s = getSettings();
@@ -322,6 +326,7 @@ async function checkout() {
       $root.html(layout()); renderLines(); renderHoldCount();
       UI.toast(duplicate ? `${doc.number} was already saved` : `${doc.number} saved — ${cur()} ${fmtNum(doc.total)}`);
       if (doPrint) await Printer.printDocument('sale', doc, { silentFail: true });
+      if (sale) UI.celebrate();
       afterSave(doc);
     } catch (err) {
       console.warn(err);
@@ -352,7 +357,7 @@ function afterSave(doc) {
 // ---------- holds ----------
 async function holdSale() {
   if (!st.lines.length) return UI.toast('Cart is empty', 'warning');
-  await Posting.saveHold({ id: uuid(), label: st.partyName || `Sale ${new Date().toLocaleTimeString()}`, state: { ...st }, total: totals().total });
+  await Posting.saveHold({ id: uuid(), label: st.partyName || `Sale ${new Date().toLocaleTimeString(locale())}`, state: { ...st }, total: totals().total });
   localStorage.removeItem(draftKey());
   st = fresh('sale');
   renderLines(); renderHoldCount();

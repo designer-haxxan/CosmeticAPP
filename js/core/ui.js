@@ -131,7 +131,7 @@ export const spinner = (text = 'Loading…') => `<div class="skeleton py-2" role
   <div class="skel" style="height:220px"></div></div>`;
 
 // Coloured initials avatar; the colour is derived from the name so it stays the same everywhere.
-const TINTS = ['indigo', 'violet', 'green', 'amber', 'cyan', 'pink', 'red', 'slate'];
+const TINTS = ['rose', 'violet', 'green', 'amber', 'cyan', 'pink', 'red', 'slate'];
 export function tintFor(name) {
   let h = 0;
   for (const ch of String(name || '')) h = (h * 31 + ch.codePointAt(0)) >>> 0;
@@ -180,6 +180,28 @@ export function pageHeader(title, actions = '', back = null) {
 // Build a <select> options list.
 export const options = (list, selected, valueKey = 'id', labelKey = 'name') =>
   list.map((o) => `<option value="${esc(o[valueKey])}" ${String(o[valueKey]) === String(selected) ? 'selected' : ''}>${esc(o[labelKey])}</option>`).join('');
+
+// Sparkle burst from the middle of the screen (used when a sale is completed). Skipped for reduced motion.
+export function celebrate() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#f472b6', '#fbbf24', '#fb7185', '#c084fc', '#fde68a', '#f9a8d4'];
+  const box = document.createElement('div');
+  box.className = 'sparkle-burst';
+  box.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2 + Math.random() * 0.2;
+    const d = 110 + Math.random() * 120;
+    const s = document.createElement('span');
+    s.style.setProperty('--dx', `${Math.cos(a) * d}px`);
+    s.style.setProperty('--dy', `${Math.sin(a) * d}px`);
+    s.style.setProperty('--c', colors[i % colors.length]);
+    s.style.animationDelay = `${Math.random() * 0.12}s`;
+    if (i % 3 === 0) s.className = 'star';
+    box.appendChild(s);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 1500);
+}
 
 export function beep() {
   try {

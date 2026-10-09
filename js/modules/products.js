@@ -1,7 +1,7 @@
 // Products & categories.
 import * as UI from '../core/ui.js';
-import { esc, fmtNum, fmtQty, debounce, compressImage, AppError } from '../core/utils.js';
-import { money, pager } from '../core/views.js';
+import { esc, fmtNum, fmtQty, fmtDate, debounce, compressImage, AppError } from '../core/utils.js';
+import { money, pager, expiryBadge } from '../core/views.js';
 import * as Auth from '../services/auth.js';
 import * as Catalog from '../services/catalog.js';
 import * as Posting from '../services/posting.js';
@@ -36,6 +36,10 @@ export async function editProduct(product = null, prefill = {}) {
         <button type="button" class="btn btn-outline-secondary btn-gen-bc" title="Generate" aria-label="Generate barcode"><i class="bi bi-magic"></i></button></div></div>
       <div class="col-6 col-md-2"><label class="form-label">Category</label><select name="categoryId" class="form-select"><option value="">—</option>${UI.options(cats, p.categoryId)}</select></div>
       <div class="col-6 col-md-2"><label class="form-label">Unit</label><input name="unit" class="form-control" list="unit-list" value="${esc(p.unit)}"><datalist id="unit-list">${UNITS.map((u) => `<option value="${u}">`).join('')}</datalist></div>
+      <div class="col-6 col-md-4"><label class="form-label">Brand</label><input name="brand" class="form-control" maxlength="80" list="brand-list" value="${esc(p.brand)}" placeholder="e.g. L'Oréal"><datalist id="brand-list">${brandList()}</datalist></div>
+      <div class="col-6 col-md-4"><label class="form-label">Shade / variant</label><input name="shade" class="form-control" maxlength="60" value="${esc(p.shade)}" placeholder="e.g. Rose 04"></div>
+      <div class="col-6 col-md-4"><label class="form-label">Batch no.</label><input name="batchNo" class="form-control" maxlength="60" value="${esc(p.batchNo)}"></div>
+      <div class="col-6 col-md-4"><label class="form-label">Expiry date</label><input name="expiryDate" type="date" class="form-control" value="${esc(p.expiryDate)}" min="2000-01-01"></div>
       <div class="col-4"><label class="form-label">Purchase price</label><input name="purchasePrice" class="form-control" inputmode="decimal" value="${p.purchasePrice ?? ''}"></div>
       <div class="col-4"><label class="form-label">Sale price</label><input name="salePrice" class="form-control" inputmode="decimal" value="${p.salePrice ?? ''}"></div>
       <div class="col-4"><label class="form-label">Wholesale</label><input name="wholesalePrice" class="form-control" inputmode="decimal" value="${p.wholesalePrice ?? ''}"></div>
@@ -100,14 +104,20 @@ async function manageCategories() {
   await m.closed;
 }
 
-async function renderList(el) {
+// Brands already used in the catalogue, offered as suggestions in the product form.
+function brandList() {
+  return [...new Set(Catalog.allProducts().map((p) => p.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b))
+    .map((b) => `<option value="${esc(b)}">`).join('');
+}
+
+async function renderList(el, initialStatus = 'active') {
   const $el = $(el).off();
   const canEdit = Auth.can('product.edit');
   $el.html(UI.pageHeader('Products', canEdit ? `<button class="btn btn-light btn-sm btn-cats"><i class="bi bi-tags"></i><span class="d-none d-sm-inline"> Categories</span></button><button class="btn btn-primary btn-sm btn-add"><i class="bi bi-plus-lg"></i> Add</button>` : '') + `
     <div class="filters">
-      <div class="input-group flex-grow-2"><input type="search" class="form-control q" placeholder="Search name, SKU, barcode…"><button class="btn btn-outline-secondary btn-scan" aria-label="Scan"><i class="bi bi-upc-scan"></i></button></div>
+      <div class="input-group flex-grow-2"><input type="search" class="form-control q" placeholder="Search name, brand, shade, SKU, barcode…"><button class="btn btn-outline-secondary btn-scan" aria-label="Scan"><i class="bi bi-upc-scan"></i></button></div>
       <select class="form-select f-cat"><option value="">All categories</option>${UI.options(Catalog.allCategories(), '')}</select>
-      <select class="form-select f-status"><option value="active">Active</option><option value="low">Low stock</option><option value="out">Out of stock</option><option value="inactive">Inactive</option><option value="all">All</option></select>
+      <select class="form-select f-status"><option value="active" ${initialStatus === 'active' ? 'selected' : ''}>Active</option><option value="expiring" ${initialStatus === 'expiring' ? 'selected' : ''}>Expiring / expired</option><option value="low">Low stock</option><option value="out">Out of stock</option><option value="inactive">Inactive</option><option value="all">All</option></select>
     </div>
     <div class="small text-body-secondary mb-2 summary"></div>
     <div class="list-card list"></div>`);
@@ -121,6 +131,7 @@ async function renderList(el) {
       if (!p.active) return false;
       if (f === 'low') return p.trackStock !== false && p.stock <= (p.minStock || 0);
       if (f === 'out') return p.trackStock !== false && p.stock <= 0;
+      if (f === 'expiring') { const e = Catalog.expiryInfo(p); return !!e && e.state !== 'ok'; }
       return true;
     });
     $el.find('.summary').text(`${list.length} product(s)`);
@@ -128,8 +139,8 @@ async function renderList(el) {
       const low = p.trackStock !== false && p.stock <= (p.minStock || 0);
       return `<button class="list-row" data-id="${esc(p.id)}">
         ${p.image ? `<img class="thumb" src="${p.image}" alt="" loading="lazy">` : UI.avatar(p.name)}
-        <div class="main"><div class="title">${esc(p.name)} ${p.active ? '' : '<span class="badge text-bg-secondary">Inactive</span>'}</div>
-          <div class="sub">${esc([p.sku, p.barcode, Catalog.category(p.categoryId)?.name].filter(Boolean).join(' · ') || '—')}</div></div>
+        <div class="main"><div class="title">${esc(p.name)} ${p.active ? '' : '<span class="badge text-bg-secondary">Inactive</span>'}${expiryBadge(p)}</div>
+          <div class="sub">${esc([p.brand, p.shade, p.sku, p.barcode, Catalog.category(p.categoryId)?.name].filter(Boolean).join(' · ') || '—')}</div></div>
         <div class="end"><div class="fw-semibold money">${money(p.salePrice)}</div>
           <div class="sub ${low ? 'text-danger fw-semibold' : ''}">${p.trackStock === false ? 'service' : `${fmtQty(p.stock)} ${esc(p.unit)}`}</div></div></button>`;
     }, 60, UI.emptyState('No products found', 'box-seam', canEdit ? '<button class="btn btn-primary btn-sm mt-3 btn-add">Add product</button>' : ''));
@@ -157,7 +168,10 @@ async function productActions(p, redraw) {
     body: `<div class="row small mb-3">
         <div class="col-6">Sale: <b>${money(p.salePrice)}</b></div><div class="col-6">Wholesale: <b>${money(p.wholesalePrice)}</b></div>
         <div class="col-6">Cost: <b>${money(p.purchasePrice)}</b></div><div class="col-6">Stock: <b>${p.trackStock === false ? 'n/a' : fmtQty(p.stock) + ' ' + esc(p.unit)}</b></div>
-        <div class="col-6">Margin: <b>${p.salePrice ? fmtNum(((p.salePrice - p.purchasePrice) / p.salePrice) * 100) + '%' : '—'}</b></div><div class="col-6">Min stock: <b>${fmtQty(p.minStock || 0)}</b></div></div>
+        <div class="col-6">Margin: <b>${p.salePrice ? fmtNum(((p.salePrice - p.purchasePrice) / p.salePrice) * 100) + '%' : '—'}</b></div><div class="col-6">Min stock: <b>${fmtQty(p.minStock || 0)}</b></div>
+        ${p.brand || p.shade ? `<div class="col-12">Brand &amp; shade: <b>${esc([p.brand, p.shade].filter(Boolean).join(' · '))}</b></div>` : ''}
+        ${p.batchNo ? `<div class="col-6">Batch: <b>${esc(p.batchNo)}</b></div>` : ''}
+        ${p.expiryDate ? `<div class="col-6">Expiry: <b>${esc(fmtDate(p.expiryDate))}</b>${expiryBadge(p)}</div>` : ''}</div>
       <div class="d-grid gap-2">
         <button class="btn btn-primary btn-edit"><i class="bi bi-pencil me-1"></i>Edit product</button>
         <a class="btn btn-outline-secondary" href="#/stock/${encodeURIComponent(p.id)}"><i class="bi bi-clock-history me-1"></i>Stock ledger</a>
@@ -174,5 +188,5 @@ async function productActions(p, redraw) {
 }
 
 export default {
-  async render(el) { await renderList(el); },
+  async render(el, { params }) { await renderList(el, params[0] === 'expiring' ? 'expiring' : 'active'); },
 };

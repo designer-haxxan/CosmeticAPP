@@ -1,4 +1,5 @@
 // Small, dependency-free helpers shared by all modules.
+import { locale } from '../i18n/i18n.js';
 
 export const uuid = () =>
   (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -25,14 +26,14 @@ export function monthStart(dateStr = today()) { return dateStr.slice(0, 8) + '01
 export function fmtDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr);
-  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(locale(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 export function fmtDateTime(iso) {
   if (!iso) return '';
-  return new Date(iso).toLocaleString(undefined, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleString(locale(), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 export function fmtTime(iso) {
-  return iso ? new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+  return iso ? new Date(iso).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) : '';
 }
 
 const moneyFmt = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

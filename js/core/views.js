@@ -1,8 +1,18 @@
 // Reusable view fragments: document links, ledger tables, date filters, balance formatting.
 import { esc, fmtNum, fmtDate, today, monthStart } from './utils.js';
 import { getSettings } from './settings.js';
+import * as Catalog from '../services/catalog.js';
 
 export const cur = () => getSettings().currency;
+
+// Badge showing a product's expiry state (empty when it has no expiry date or is fine).
+export function expiryBadge(p) {
+  const e = Catalog.expiryInfo(p);
+  if (!e || e.state === 'ok') return '';
+  return e.state === 'expired'
+    ? '<span class="badge text-bg-danger ms-1">Expired</span>'
+    : `<span class="badge text-bg-warning ms-1">Expires in ${e.days} days</span>`;
+}
 export const money = (n) => `${esc(cur())} ${fmtNum(n)}`;
 
 const REF_ROUTES = {

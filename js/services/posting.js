@@ -561,6 +561,8 @@ export async function saveProduct(data) {
   const wholesalePrice = round2(num(data.wholesalePrice));
   if (salePrice < 0 || purchasePrice < 0 || wholesalePrice < 0) throw new AppError('Prices cannot be negative.');
   const openingStock = round3(num(data.openingStock));
+  const brand = clean(data.brand, 80); const shade = clean(data.shade, 60); const batchNo = clean(data.batchNo, 60);
+  const expiryDate = /^\d{4}-\d{2}-\d{2}$/.test(data.expiryDate || '') ? data.expiryDate : '';
   const ctx = newCtx();
   const rec = await idb.write(['products', 'stockMoves', 'auditLog'], async (t) => {
     if (barcode) {
@@ -575,7 +577,7 @@ export async function saveProduct(data) {
     if (data.id && !old) throw new AppError('Product not found.');
     const now = nowISO();
     const trackStock = data.trackStock !== false;
-    const p = { ...(old || { createdAt: now, stock: 0 }), id, name, nameLc: lc(name), sku, barcode, categoryId: data.categoryId || '', unit: clean(data.unit, 20) || 'pcs',
+    const p = { ...(old || { createdAt: now, stock: 0 }), id, name, nameLc: lc(name), brand, shade, batchNo, expiryDate, sku, barcode, categoryId: data.categoryId || '', unit: clean(data.unit, 20) || 'pcs',
       purchasePrice, salePrice, wholesalePrice, minStock: round3(num(data.minStock)), openingStock: trackStock ? openingStock : 0, trackStock,
       image: data.image === undefined ? (old?.image || '') : data.image, active: data.active === false ? 0 : 1, updatedAt: now };
     const openRef = 'open:' + id;

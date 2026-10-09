@@ -6,6 +6,8 @@ import { esc } from './core/utils.js';
 import { openDB } from './db/idb.js';
 import * as Auth from './services/auth.js';
 import * as Catalog from './services/catalog.js';
+import { seedStarterCategories } from './services/seed.js';
+import * as I18n from './i18n/i18n.js';
 
 const $ = window.jQuery;
 
@@ -207,9 +209,11 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', a
 // ---------- Boot ----------
 (async function boot() {
   applyTheme();
+  I18n.applyLanguage();
   registerSW();
   if (!window.jQuery || !window.bootstrap) return fatal('Required libraries failed to load. Connect to the internet once so the app can be cached for offline use.');
   try { await openDB(); } catch (e) { return fatal('Could not open the local database: ' + (e.message || e)); }
+  try { await seedStarterCategories(); } catch (e) { console.warn('Starter categories were not added:', e); }
   const { user, reason } = Auth.restoreSession();
   if (user) {
     try { await startApp(); } catch (e) { console.error(e); fatal(e.message || String(e)); }

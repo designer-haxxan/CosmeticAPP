@@ -1,13 +1,15 @@
-# SaleAPP POS
+# Glow POS: Cosmetics & Retail
 
-Offline-first, mobile-first Point of Sale as a static PWA (no build step).
+Offline-first, mobile-first Point of Sale for cosmetics, skincare, beauty and general retail shops. It is a static PWA with no build step, and its interface is available in **English** and **اردو** (right-to-left).
 HTML5 · ES modules · jQuery · Bootstrap 5 · Bootstrap Icons · IndexedDB · Service Worker · eposwala login API.
 
 ## Features
 
-- **POS sales**: search, camera/hardware barcode scan, cart with qty/rate/discount, bill discount, tax, cash/bank/credit/partial payments, change calculation, hold/resume, edit, void, returns, receipt printing. The cart survives page refresh.
+- **POS sales**: search, camera/hardware barcode scan, cart with qty/rate/discount, bill discount, tax, cash/bank/credit/partial payments, change calculation, hold/resume, edit, void, returns, receipt printing. The cart survives page refresh. A sparkle celebration plays when a sale is completed.
+- **Expired products** are flagged in the POS (product tile badge and a warning when added to the cart). The sale is not blocked, so staff decide.
 - **Purchases**: suppliers, purchase rate, discount, paid/remaining, edit, void, returns. Can update product cost from the latest purchase.
-- **Products & categories**: SKU, barcode (scan or generate EAN-13), unit, purchase/sale/wholesale prices, opening/min stock, compressed images, services (no stock).
+- **Products & categories**: brand, shade/variant, batch number, expiry date, SKU, barcode (scan or generate EAN-13), unit, purchase/sale/wholesale prices, opening/min stock, compressed images, services (no stock). Nine starter cosmetics categories (Skincare, Makeup, Haircare, Fragrance, Nails, Bath & Body, Men's grooming, Tools & Accessories, Wellness) are added on a new device; existing categories are never changed.
+- **Expiry alerts**: products expiring within 60 days (or already expired) appear on the dashboard, in the Products list filter *Expiring / expired*, and in the POS.
 - **Customers & suppliers**: contact info, opening balance, ledger/statement (print), payments.
 - **Accounts / cash book**: cash, bank/wallet, income, expense, asset, liability accounts. Receipts, payments and transfers use double-entry ledger entries.
 - **Stock**: current stock, low/out-of-stock, stock ledger per product, adjustments (add/remove/set count) with void.
@@ -15,18 +17,27 @@ HTML5 · ES modules · jQuery · Bootstrap 5 · Bootstrap Icons · IndexedDB · 
 - **Backup & restore**: versioned JSON with checksum, validation preview, replace or merge.
 - **PWA**: installable, works fully offline after the first online login.
 
+## Languages (English / اردو)
+
+- The language button in the top bar (and on the sign-in screen) switches between English and Urdu. The choice is saved on the device.
+- Urdu switches the layout to right-to-left (Bootstrap RTL stylesheet, mirrored sidebar, fields and arrows) and uses the Jameel Noori Nastaleeq font for Urdu text.
+- **How it works:** the English text of the UI is the key. `js/i18n/ur.js` maps each English phrase to Urdu, and `UR_PATTERNS` covers texts that contain numbers or names (for example "Expires in 11 days"). `js/i18n/i18n.js` translates text nodes and `placeholder` / `title` / `aria-label` attributes when they are rendered, and keeps translating anything added later.
+- **To add or change a translation:** edit `js/i18n/ur.js` with the exact English text as it appears on screen. Strings that contain a variable need a pattern.
+- Receipts and printed reports stay in their existing format.
+
 ## Architecture
 
 ```
 index.html              App shell (splash, login, layout)
 manifest.json           PWA manifest
 service-worker.js       Precache of shell + CDN libs; cache-first; /api/ requests never cached
-css/app.css
+css/app.css             Theme (rose / plum / gold), beauty motifs, RTL overrides
 js/app.js               Boot, auth gate + session expiry, router (lazy-loaded modules), connection badge, SW updates
 js/config.js            Login API base URL, support phone, app/schema/backup versions
-js/core/                utils, settings (LocalStorage), UI helpers, shared views
+js/core/                utils, settings (LocalStorage), UI helpers (incl. celebrate), shared views, lang-early (sets direction before first paint)
 js/db/                  IndexedDB wrapper (atomic multi-store transactions) + schema
-js/services/            auth, catalog (in-memory search index), posting engine, backup
+js/i18n/                i18n.js (runtime translation), ur.js (Urdu dictionary + patterns)
+js/services/            auth, catalog (in-memory search index, expiry state), posting engine, backup, seed (starter categories)
 js/modules/             dashboard, pos (sale + purchase), documents, products, stock, parties, vouchers, accounts, settings, backup
 js/reports/             reports
 js/printer/             ESC/POS encoder, receipt builder, Bluetooth/RawBT/browser printing

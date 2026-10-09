@@ -3,27 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Offline-first point of sale with sales, purchases, stock, accounts and reports.">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="description" content="Glow POS: offline-first point of sale for cosmetics, skincare and retail shops, with batches, expiry tracking, accounts and reports. English and اردو.">
+  <meta name="theme-color" content="#be185d">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://eposwala.com https://cdn.jsdelivr.net; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="SaleAPP POS">
+  <meta name="apple-mobile-web-app-title" content="Glow POS">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" id="bs-rtl" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" disabled>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.1.0/index.css">
   <link rel="stylesheet" href="css/app.css">
-  <title>SaleAPP POS</title>
+  <script src="js/core/lang-early.js"></script>
+  <title>Glow POS</title>
 </head>
 <body>
   <!-- Splash / loading screen -->
   <div id="splash">
     <div class="splash-logo"><img src="icons/icon-192.png" alt=""></div>
-    <div class="splash-name mt-3">SaleAPP POS</div>
+    <div class="splash-name mt-3">Glow POS</div>
+    <div class="splash-sub">Cosmetics &amp; Retail</div>
     <div class="splash-bar" role="status"><span class="visually-hidden">Loading</span></div>
     <div id="splash-error" class="text-danger small mt-3 px-4 text-center"></div>
   </div>
@@ -31,61 +34,81 @@
   <!-- Login -->
   <div id="view-login" class="d-none">
     <div class="auth">
-      <div class="auth-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span><div class="grid-lines"></div></div>
+      <div class="auth-bg" aria-hidden="true">
+        <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+        <div class="grid-lines"></div>
+        <span class="petal p1"></span><span class="petal p2"></span><span class="petal p3"></span><span class="petal p4"></span><span class="petal p5"></span><span class="petal p6"></span>
+      </div>
       <div class="auth-inner">
         <section class="auth-hero">
           <div class="brand-row">
             <div class="brand-mark"><img src="icons/icon-192.png" alt=""></div>
-            <div><div class="name">SaleAPP POS</div><div class="tag">Point of Sale · Inventory · Accounts</div></div>
+            <div><div class="name">Glow POS</div><div class="tag">Cosmetics &amp; Retail · Point of Sale</div></div>
           </div>
-          <h1>Run your whole business <span class="grad">from one app.</span></h1>
-          <p class="lead-sm">Sell, buy, track stock and keep your accounts — for any shop, wholesaler or distributor. Works even without internet.</p>
+          <h1>Your beauty shop, <span class="grad">beautifully managed.</span></h1>
+          <p class="lead-sm">Sell, track shades, batches and expiry dates, keep stock and accounts in order. Works even without internet.</p>
           <ul class="feature-chips">
             <li><i class="bi bi-wifi-off"></i>Works offline</li>
-            <li><i class="bi bi-box-seam"></i>Inventory</li>
-            <li><i class="bi bi-journal-check"></i>Accounts &amp; ledgers</li>
+            <li><i class="bi bi-palette2"></i>Shades &amp; brands</li>
+            <li><i class="bi bi-calendar2-x"></i>Expiry alerts</li>
             <li><i class="bi bi-upc-scan"></i>Barcode</li>
-            <li><i class="bi bi-printer"></i>Bluetooth receipts</li>
-            <li><i class="bi bi-translate"></i><span class="ur-chip">اردو رسید</span></li>
+            <li><i class="bi bi-journal-check"></i>Accounts</li>
+            <li><i class="bi bi-translate"></i><span class="ur-chip">اردو · English</span></li>
           </ul>
           <div class="hero-art" aria-hidden="true">
             <svg viewBox="0 0 520 330" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="hg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".22"/><stop offset="1" stop-color="#ffffff" stop-opacity=".06"/></linearGradient>
-                <linearGradient id="hg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5b4fc"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
-                <linearGradient id="hg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0abfc"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
+                <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7d98b"/><stop offset=".5" stop-color="#d4a53a"/><stop offset="1" stop-color="#9a6b1c"/></linearGradient>
+                <linearGradient id="rose" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fb7fb0"/><stop offset="1" stop-color="#be185d"/></linearGradient>
+                <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".9"/><stop offset="1" stop-color="#fbcfe8" stop-opacity=".55"/></linearGradient>
+                <linearGradient id="plumjar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a21caf"/><stop offset="1" stop-color="#4a044e"/></linearGradient>
+                <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
               </defs>
+              <circle cx="260" cy="170" r="150" fill="url(#glow)"/>
+              <!-- perfume bottle -->
               <g class="float-a">
-                <rect x="40" y="30" width="330" height="220" rx="22" fill="url(#hg1)" stroke="rgba(255,255,255,.25)"/>
-                <circle cx="66" cy="54" r="5" fill="#f87171"/><circle cx="82" cy="54" r="5" fill="#fbbf24"/><circle cx="98" cy="54" r="5" fill="#34d399"/>
-                <rect x="64" y="78" width="120" height="12" rx="6" fill="rgba(255,255,255,.55)"/>
-                <rect x="64" y="98" width="80" height="22" rx="8" fill="#fff"/>
-                <rect class="bar" x="70"  y="170" width="26" height="54"  rx="6" fill="url(#hg2)" style="animation-delay:.1s"/>
-                <rect class="bar" x="110" y="150" width="26" height="74"  rx="6" fill="url(#hg2)" style="animation-delay:.2s"/>
-                <rect class="bar" x="150" y="180" width="26" height="44"  rx="6" fill="url(#hg2)" style="animation-delay:.3s"/>
-                <rect class="bar" x="190" y="130" width="26" height="94"  rx="6" fill="url(#hg2)" style="animation-delay:.4s"/>
-                <rect class="bar" x="230" y="145" width="26" height="79"  rx="6" fill="url(#hg2)" style="animation-delay:.5s"/>
-                <rect class="bar" x="270" y="110" width="26" height="114" rx="6" fill="url(#hg3)" style="animation-delay:.6s"/>
-                <rect class="bar" x="310" y="125" width="26" height="99"  rx="6" fill="url(#hg2)" style="animation-delay:.7s"/>
+                <rect x="78" y="176" width="120" height="112" rx="30" fill="url(#glass)" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>
+                <rect x="98" y="206" width="80" height="60" rx="18" fill="url(#rose)" opacity=".9"/>
+                <rect x="112" y="122" width="52" height="58" rx="8" fill="url(#gold)"/>
+                <rect x="104" y="108" width="68" height="18" rx="6" fill="url(#gold)"/>
+                <rect x="96" y="194" width="18" height="70" rx="9" fill="#fff" opacity=".45"/>
               </g>
+              <!-- lipstick -->
               <g class="float-b">
-                <path d="M392 70 h96 a10 10 0 0 1 10 10 v170 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 l-12 8 l-12 -8 V80 a10 10 0 0 1 10 -10z" fill="#fff"/>
-                <rect x="410" y="92" width="64" height="9" rx="4.5" fill="#6366f1"/>
-                <rect x="404" y="114" width="76" height="6" rx="3" fill="#e5e7eb"/><rect x="404" y="128" width="58" height="6" rx="3" fill="#e5e7eb"/>
-                <rect x="404" y="142" width="70" height="6" rx="3" fill="#e5e7eb"/><rect x="404" y="156" width="48" height="6" rx="3" fill="#e5e7eb"/>
-                <rect x="404" y="178" width="76" height="2" fill="#c7d2fe"/>
-                <rect x="404" y="190" width="40" height="10" rx="5" fill="#111827"/><rect x="452" y="190" width="28" height="10" rx="5" fill="#16a34a"/>
-                <g transform="translate(410 208)"><rect width="2" height="18" fill="#111827"/><rect x="5" width="1" height="18" fill="#111827"/><rect x="9" width="3" height="18" fill="#111827"/><rect x="15" width="1" height="18" fill="#111827"/><rect x="19" width="2" height="18" fill="#111827"/><rect x="24" width="1" height="18" fill="#111827"/><rect x="28" width="3" height="18" fill="#111827"/><rect x="34" width="2" height="18" fill="#111827"/><rect x="39" width="1" height="18" fill="#111827"/><rect x="43" width="3" height="18" fill="#111827"/><rect x="49" width="2" height="18" fill="#111827"/><rect x="54" width="1" height="18" fill="#111827"/><rect x="58" width="3" height="18" fill="#111827"/></g>
+                <rect x="364" y="170" width="46" height="120" rx="7" fill="url(#gold)"/>
+                <path d="M364 176 V124 Q364 96 387 92 Q410 96 410 124 V176 Z" fill="url(#rose)"/>
+                <rect x="364" y="164" width="46" height="10" fill="#7a5a1a" opacity=".35"/>
               </g>
-              <g class="float-b"><circle cx="34" cy="272" r="26" fill="#fbbf24"/><circle cx="34" cy="272" r="18" fill="none" stroke="#fde68a" stroke-width="3"/><text x="34" y="279" text-anchor="middle" font-size="18" font-weight="800" fill="#92400e">Rs</text></g>
-              <g class="float-a"><rect x="300" y="262" width="62" height="50" rx="8" fill="#22d3ee"/><path d="M300 278 h62" stroke="#0e7490" stroke-width="3"/><rect x="322" y="262" width="18" height="16" fill="#67e8f9"/></g>
+              <!-- compact mirror -->
+              <g class="float-a" style="animation-delay:-2s">
+                <circle cx="262" cy="248" r="50" fill="url(#gold)"/>
+                <circle cx="262" cy="248" r="39" fill="#fdf2f8"/>
+                <circle cx="262" cy="248" r="34" fill="#fbcfe8" opacity=".7"/>
+                <path d="M244 230 Q254 220 270 218" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".9"/>
+              </g>
+              <!-- cream jar -->
+              <g class="float-b" style="animation-delay:-4s">
+                <rect x="206" y="282" width="34" height="20" rx="5" fill="url(#gold)"/>
+                <rect x="200" y="300" width="46" height="24" rx="9" fill="url(#plumjar)"/>
+              </g>
+              <!-- sparkles -->
+              <path class="spark s1" d="M44 60 l5 -16 l5 16 l16 5 l-16 5 l-5 16 l-5 -16 l-16 -5 z" fill="#fde68a"/>
+              <path class="spark s2" d="M452 74 l4 -12 l4 12 l12 4 l-12 4 l-4 12 l-4 -12 l-12 -4 z" fill="#fff"/>
+              <path class="spark s3" d="M300 34 l3 -9 l3 9 l9 3 l-9 3 l-3 9 l-3 -9 l-9 -3 z" fill="#fbcfe8"/>
+              <circle class="spark s2" cx="24" cy="200" r="4" fill="#fff"/>
+              <circle class="spark s1" cx="492" cy="196" r="5" fill="#fde68a"/>
             </svg>
           </div>
         </section>
 
         <section class="auth-card" aria-labelledby="login-title">
-          <h2 id="login-title">Welcome back</h2>
-          <div class="sub">Sign in to your shop to continue</div>
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <h2 id="login-title">Welcome back</h2>
+              <div class="sub">Sign in to your shop to continue</div>
+            </div>
+            <button type="button" class="btn btn-sm lang-toggle" data-lang-toggle aria-label="Language"></button>
+          </div>
           <div id="login-notice" class="alert alert-warning small d-none"></div>
           <form id="login-form" novalidate>
             <div class="field">
@@ -103,7 +126,7 @@
             <button type="submit" class="btn btn-grad btn-login w-100" id="login-btn"><span>Sign in</span><i class="bi bi-arrow-right"></i></button>
           </form>
           <div class="auth-foot" id="login-conn"></div>
-          <div class="text-center small mt-2" style="color:#8a8fa3">Internet is needed to sign in. After that the app works offline.</div>
+          <div class="text-center small mt-2 auth-note-dark">Internet is needed to sign in. After that the app works offline.</div>
         </section>
       </div>
     </div>
@@ -112,13 +135,14 @@
   <!-- Application -->
   <div id="view-app" class="d-none">
     <aside id="sidebar" class="d-none d-lg-flex flex-column">
-      <div class="sidebar-brand"><div class="logo"><img src="icons/icon-192.png" alt=""></div> <span id="brand-name">SaleAPP POS</span></div>
+      <div class="sidebar-brand"><div class="logo"><img src="icons/icon-192.png" alt=""></div> <span id="brand-name">Glow POS</span></div>
       <nav class="nav flex-column flex-grow-1 overflow-auto nav-menu" aria-label="Main"></nav>
     </aside>
     <div class="app-main">
       <header class="app-topbar">
         <button class="btn btn-link text-body d-lg-none px-1" data-bs-toggle="offcanvas" data-bs-target="#menu-offcanvas" aria-label="Menu"><i class="bi bi-list fs-4"></i></button>
         <div class="fw-semibold text-truncate flex-grow-1" id="topbar-title">Dashboard</div>
+        <button type="button" class="btn btn-sm lang-toggle" data-lang-toggle aria-label="Language"></button>
         <span id="conn-badge" class="badge rounded-pill conn-online" title="Connection status"><i class="bi bi-wifi"></i> <span>Online</span></span>
         <div class="dropdown">
           <button class="avatar-btn ms-1" id="user-avatar" data-bs-toggle="dropdown" aria-label="Account"><i class="bi bi-person"></i></button>
